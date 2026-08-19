@@ -1,0 +1,1658 @@
+<!--
+   cromatografia4.html
+   
+   Copyright 2025 Raimundo Martinez <rai@raimundo-macbookair52>
+   
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+   MA 02110-1301, USA.
+   
+   
+-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title>sense títol</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta name="generator" content="Geany 1.38" />
+	<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+</head>
+
+<body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador HPLC Avanzado y Robustez</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js para la curva de calibración -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Estils comuns per a la consistència visual -->
+    <link rel="stylesheet" href="assets/css/common.css">
+</head>
+<body class="p-0 m-0 bg-slate-50 dark:bg-slate-900">
+    <!-- Contenedor principal de la aplicación -->
+    <div id="app-container" class="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
+        <!-- El contenido será inyectado aquí por JavaScript -->
+        <div id="content-root">
+            <div class="text-center p-10">
+                <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <p class="mt-4 text-slate-600">Cargando simulador HPLC (JavaScript)...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * @file cromatografia4.html
+         * @author Raimundo Martinez (versió original), Gemini Code Assist (refactorització i documentació)
+         * @date 2025
+         * @brief Simulador HPLC avançat amb anàlisi de gradient, pH, calibració i robustesa.
+         * Aquesta versió ha estat refactoritzada per millorar la modularitat, llegibilitat i mantenibilitat
+         * del codi, utilitzant JavaScript pur (Vanilla JS) amb una arquitectura més estructurada.
+         */
+
+        // --- INTERNACIONALITZACIÓ (i18n) ---
+
+        const translations = {
+            ca: {
+                simulatorTitle: "Simulador HPLC Didàctic Avançat",
+                simulatorSubtitle: "Gradient, pH, Calibració i Anàlisi de Robustesa.",
+                statusLabel: "ESTAT",
+                statusReady: "A PUNT",
+                statusAnalyzing: "ANALITZANT...",
+                statusTesting: "TESTEJANT ROBUSTESA...",
+                statusError: "ERROR",
+                pressureUnit: "bar",
+                methodParameters: "Paràmetres del Mètode (Fase Mòbil i Columna)",
+                pumpFlow: "Flux de Bomba",
+                columnTemp: "Temperatura de Columna",
+                useGradient: "Utilitzar Gradient",
+                gradient: "GRADIENT",
+                isocratic: "ISOCRÀTIC",
+                organicPhaseStart: "% Fase Orgànica (B) - Inici",
+                organicPhaseEnd: "% Fase Orgànica (B) - Final",
+                gradientTime: "Temps de Gradient",
+                bufferPH: "pH del Tampó",
+                phEffectHelp: "Afecta fortament la retenció de compostos ionitzables.",
+                columnType: "Tipus de Columna",
+                columnLength: "Longitud de Columna",
+                sampleToAnalyze: "Mostra a Analitzar",
+                selectSample: "Seleccionar Mostra",
+                sampleContains: "Conté:",
+                injectSample: "INJECTAR MOSTRA",
+                criticalError: "Error Crític del Sistema",
+                chromatogramTitle: "Cromatograma - Detector UV-Vis (254 nm)",
+                exportSVG: "Exportar SVG",
+                timeUnit: "Temps (min)",
+                absorbanceUnit: "Absorbancia (mAU)",
+                calibrationCurve: "Corba de Calibració",
+                loading: "Carregant...",
+                standardConcentration: "Concentració de l'Estàndard",
+                injectStandard: "INJECTAR ESTÀNDARD",
+                clearCurve: "Netejar Corba",
+                approxEquation: "Equació Aprox:",
+                injectAtLeast2Standards: "Injecti almenys 2 estàndards per traçar la corba.",
+                robustnessAnalysis: "Anàlisi de Robustesa",
+                robustnessDescription: "Avalua com els petits canvis en els paràmetres del mètode afecten la qualitat de la separació (Resolució Crítica, $R_s$).",
+                calculating: "Calculant...",
+                resultsReady: "Resultats a punt. Clicki a sota per veure'ls.",
+                pressStartTest: "Pressioni Iniciar Test",
+                goodSeparationRequired: "(Asseguri's que la separació nominal sigui bona: $R_s > 1.5$)",
+                viewResults: "VEURE RESULTATS",
+                startRobustnessTest: "INICIAR TEST DE ROBUSTESA",
+                lowCriticalResolution: "Res. Crítica molt baixa! Millori el mètode primer.",
+                integrationResults: "Resultats d'Integració",
+                peak: "Pico",
+                compound: "Compost",
+                width: "Amplada",
+                kFactor: "k' (Factor)",
+                resolution: "Resolució ($R_s$)",
+                critical: "(Crític)",
+                minResolution: "Resolució Mínima (Crítica):",
+                between: "entre",
+                and: "i",
+                robustnessResult: "Resultat del Test de Robustesa",
+                robustnessResultDescription: "Aquesta anàlisi mostra la sensibilitat del mètode davant petites variacions en els paràmetres clau. Un mètode és robust si $t_R$ i $R_s$ varien mínimament.",
+                closeAnalysis: "Tancar Anàlisi",
+            },
+            es: {
+                simulatorTitle: "Simulador HPLC Didáctico Avanzado",
+                simulatorSubtitle: "Gradiente, pH, Calibración y Análisis de Robustez.",
+                statusLabel: "ESTADO",
+                statusReady: "LISTO",
+                statusAnalyzing: "ANALIZANDO...",
+                statusTesting: "TESTEANDO ROBUSTEZ...",
+                statusError: "ERROR",
+                pressureUnit: "bar",
+                methodParameters: "Parámetros del Método (Fase Móvil y Columna)",
+                pumpFlow: "Flujo de Bomba",
+                columnTemp: "Temperatura de Columna",
+                useGradient: "Usar Gradiente",
+                gradient: "GRADIENTE",
+                isocratic: "ISOCRÁTICO",
+                organicPhaseStart: "% Fase Orgánica (B) - Inicio",
+                organicPhaseEnd: "% Fase Orgánica (B) - Final",
+                gradientTime: "Tiempo de Gradiente",
+                bufferPH: "pH del Tampón",
+                phEffectHelp: "Afecta fuertemente la retención de compuestos ionizables.",
+                columnType: "Tipo de Columna",
+                columnLength: "Longitud de Columna",
+                sampleToAnalyze: "Muestra a Analizar",
+                selectSample: "Seleccionar Muestra",
+                sampleContains: "Contiene:",
+                injectSample: "INYECTAR MUESTRA",
+                criticalError: "Error Crítico del Sistema",
+                chromatogramTitle: "Cromatograma - Detector UV-Vis (254 nm)",
+                exportSVG: "Exportar SVG",
+                timeUnit: "Tiempo (min)",
+                absorbanceUnit: "Absorbancia (mAU)",
+                calibrationCurve: "Curva de Calibración",
+                loading: "Cargando...",
+                standardConcentration: "Concentración del Estándar",
+                injectStandard: "INYECTAR ESTÁNDAR",
+                clearCurve: "Limpiar Curva",
+                approxEquation: "Ecuación Aprox:",
+                injectAtLeast2Standards: "Inyecte al menos 2 estándares para trazar la curva.",
+                robustnessAnalysis: "Análisis de Robustez",
+                robustnessDescription: "Evalúa cómo los pequeños cambios en los parámetros del método afectan la calidad de la separación (Resolución Crítica, $R_s$).",
+                calculating: "Calculando...",
+                resultsReady: "Resultados listos. Click abajo para ver detalles.",
+                pressStartTest: "Presione Iniciar Test",
+                goodSeparationRequired: "(Asegúrese de que la separación nominal sea buena: $R_s > 1.5$)",
+                viewResults: "VER RESULTADOS",
+                startRobustnessTest: "INICIAR TEST DE ROBUSTEZ",
+                lowCriticalResolution: "¡Res. Crítica muy baja! Mejore el método primero.",
+                integrationResults: "Resultados de Integración",
+                peak: "Pico",
+                compound: "Compuesto",
+                width: "Ancho",
+                kFactor: "k' (Factor)",
+                resolution: "Resolución ($R_s$)",
+                critical: "(Crítico)",
+                minResolution: "Resolución Mínima (Crítica):",
+                between: "entre",
+                and: "y",
+                robustnessResult: "Resultado del Test de Robustez",
+                robustnessResultDescription: "Este análisis muestra la sensibilidad del método ante pequeñas variaciones en los parámetros clave. Un método es robusto si $t_R$ y $R_s$ varían mínimamente.",
+                closeAnalysis: "Cerrar Análisis",
+            },
+            en: {
+                simulatorTitle: "Advanced Didactic HPLC Simulator",
+                simulatorSubtitle: "Gradient, pH, Calibration, and Robustness Analysis.",
+                statusLabel: "STATUS",
+                statusReady: "READY",
+                statusAnalyzing: "ANALYZING...",
+                statusTesting: "TESTING ROBUSTNESS...",
+                statusError: "ERROR",
+                pressureUnit: "bar",
+                methodParameters: "Method Parameters (Mobile Phase & Column)",
+                pumpFlow: "Pump Flow",
+                columnTemp: "Column Temperature",
+                useGradient: "Use Gradient",
+                gradient: "GRADIENT",
+                isocratic: "ISOCRATIC",
+                organicPhaseStart: "% Organic Phase (B) - Start",
+                organicPhaseEnd: "% Organic Phase (B) - End",
+                gradientTime: "Gradient Time",
+                bufferPH: "Buffer pH",
+                phEffectHelp: "Strongly affects the retention of ionizable compounds.",
+                columnType: "Column Type",
+                columnLength: "Column Length",
+                sampleToAnalyze: "Sample to Analyze",
+                selectSample: "Select Sample",
+                sampleContains: "Contains:",
+                injectSample: "INJECT SAMPLE",
+                criticalError: "Critical System Error",
+                chromatogramTitle: "Chromatogram - UV-Vis Detector (254 nm)",
+                exportSVG: "Export SVG",
+                timeUnit: "Time (min)",
+                absorbanceUnit: "Absorbance (mAU)",
+                calibrationCurve: "Calibration Curve",
+                loading: "Loading...",
+                standardConcentration: "Standard Concentration",
+                injectStandard: "INJECT STANDARD",
+                clearCurve: "Clear Curve",
+                approxEquation: "Approx. Equation:",
+                injectAtLeast2Standards: "Inject at least 2 standards to plot the curve.",
+                robustnessAnalysis: "Robustness Analysis",
+                robustnessDescription: "Evaluates how small changes in method parameters affect separation quality (Critical Resolution, $R_s$).",
+                calculating: "Calculating...",
+                resultsReady: "Results are ready. Click below for details.",
+                pressStartTest: "Press Start Test",
+                goodSeparationRequired: "(Ensure nominal separation is good: $R_s > 1.5$)",
+                viewResults: "VIEW RESULTS",
+                startRobustnessTest: "START ROBUSTNESS TEST",
+                lowCriticalResolution: "Critical Res. is too low! Improve the method first.",
+                integrationResults: "Integration Results",
+                peak: "Peak",
+                compound: "Compound",
+                width: "Width",
+                kFactor: "k' (Factor)",
+                resolution: "Resolution ($R_s$)",
+                critical: "(Critical)",
+                minResolution: "Minimum (Critical) Resolution:",
+                between: "between",
+                and: "and",
+                robustnessResult: "Robustness Test Result",
+                robustnessResultDescription: "This analysis shows the method's sensitivity to small variations in key parameters. A method is robust if $t_R$ and $R_s$ vary minimally.",
+                closeAnalysis: "Close Analysis",
+            },
+            eu: { // Euskara
+                simulatorTitle: "HPLC Simulagailu Didaktiko Aurreratua",
+                statusLabel: "EGOERA",
+                statusReady: "PREST",
+                methodParameters: "Metodoaren Parametroak (Fase Mugikorra eta Zutabea)",
+                // ... (la resta de claus utilitzaran 'es' per defecte)
+            },
+            gl: { // Galego
+                simulatorTitle: "Simulador HPLC Didáctico Avanzado",
+                statusLabel: "ESTADO",
+                statusReady: "LISTO",
+                methodParameters: "Parámetros do Método (Fase Móbil e Columna)",
+                // ... (la resta de claus utilitzaran 'es' per defecte)
+            }
+        };
+
+        /** Funció d'ajuda per a la traducció */
+        const t = (key) => {
+            return translations[appState.currentLanguage]?.[key] || translations['es'][key] || `[${key}]`;
+        };
+
+        // --- CONSTANTS I MODELS DE DADES ---
+
+        /** @constant {number} MAX_PRESSURE - Pressió màxima permesa en bar abans que el sistema doni error. */
+        const MAX_PRESSURE = 400; // Bar
+        
+        /** @constant {Array<Object>} COLUMN_TYPES - Defineix les propietats de diferents tipus de columnes cromatogràfiques. */
+        const COLUMN_TYPES = [
+            { id: 'C18', name: 'C18 (Estándar)', baseEfficiency: 50, selectivityFactor: 1.0 },
+            { id: 'C8', name: 'C8 (Menos Retención)', baseEfficiency: 40, selectivityFactor: 0.8 },
+            { id: 'PHENYL', name: 'Fenil (Selectividad Aromática)', baseEfficiency: 60, selectivityFactor: 1.2 }
+        ];
+
+        /** @constant {Array<Object>} SAMPLE_MIXTURES - Defineix les mescles de compostos que es poden analitzar. */
+        const SAMPLE_MIXTURES = [
+            {
+                id: 'additives',
+                name: 'Aditivos Alimentarios',
+                description: 'Cafeïna, Aspartam i Conservants. (Àcids febles: Àcid Benzoic, Sorbat)',
+                compounds: [
+                    { name: 't0 (Temps Mort)', k_ref: 0, S: 0, color: '#94a3b8', pKa: 0, concentration: 1.0 }, 
+                    { name: 'Cafeïna', k_ref: 2.5, S: 2.8, color: '#3b82f6', pKa: 0, concentration: 1.0 },
+                    { name: 'Aspartam', k_ref: 4.8, S: 3.2, color: '#10b981', pKa: 0, concentration: 1.0 },
+                    { name: 'Àcid Benzoic', k_ref: 8.2, S: 3.5, color: '#f59e0b', pKa: 4.2, concentration: 1.0 }, // Ionitzable (àcid feble)
+                    { name: 'Sorbat Potàssic', k_ref: 12.5, S: 3.9, color: '#ef4444', pKa: 4.8, concentration: 1.0 } // Ionitzable (àcid feble)
+                ]
+            },
+            {
+                id: 'analgesics',
+                name: 'Fàrmacs Analgèsics',
+                description: 'Analgèsics i estimulants de venda lliure.',
+                compounds: [
+                    { name: 't0 (Temps Mort)', k_ref: 0, S: 0, color: '#94a3b8', pKa: 0, concentration: 1.0 }, 
+                    { name: 'Paracetamol', k_ref: 3.0, S: 2.0, color: '#8b5cf6', pKa: 0, concentration: 1.0 }, 
+                    { name: 'Cafeïna', k_ref: 3.8, S: 2.5, color: '#3b82f6', pKa: 0, concentration: 1.0 }, 
+                    { name: 'Ibuprofèn', k_ref: 9.5, S: 4.0, color: '#14b8a6', pKa: 4.9, concentration: 1.0 }, // Ionitzable (àcid feble)
+                    { name: 'Naproxèn', k_ref: 15.0, S: 4.5, color: '#f97316', pKa: 4.2, concentration: 1.0 } // Ionitzable (àcid feble)
+                ]
+            },
+            {
+                id: 'vitamins',
+                name: 'Vitaminas Hidrosolubles',
+                description: 'Vitamines B3, B6, i B12. Alta dependència del pH.',
+                compounds: [
+                    { name: 't0 (Temps Mort)', k_ref: 0, S: 0, color: '#94a3b8', pKa: 0, concentration: 1.0 }, 
+                    // B3 (Niacina/Àcid Nicotínic, pKa ~4.8) - Menys retinguda a pH alt
+                    { name: 'Vitamina B3', k_ref: 3.5, S: 2.0, color: '#f59e0b', pKa: 4.8, concentration: 1.0 },
+                    // B6 (Piridoxina, pKa ~5.0 / 9.2)
+                    { name: 'Vitamina B6', k_ref: 4.0, S: 2.5, color: '#ef4444', pKa: 5.0, concentration: 1.0 },
+                    // B12 (Cianocobalamina) - Gran, més retinguda
+                    { name: 'Vitamina B12', k_ref: 8.0, S: 3.5, color: '#8b5cf6', pKa: 0, concentration: 1.0 },
+                ]
+            }
+        ];
+
+        /**
+         * @description Objecte que conté tot l'estat de l'aplicació.
+         * Aquest objecte centralitza totes les dades dinàmiques del simulador.
+         */
+        const appState = {
+            currentLanguage: 'ca',
+            theme: 'light', // 'light' o 'dark'
+            // Paràmetres del Mètode
+            flowRate: 1.0, 
+            isocraticSolventB: 40, 
+            temperature: 25, 
+            columnLength: 150, 
+            selectedColumnId: 'C18',
+            selectedSampleId: 'vitamins', 
+            useGradient: false,
+            endSolventB: 80, 
+            gradientTime: 10.0, 
+            pH: 3.0, 
+            
+            // Estat de la Simulació
+            isRunning: false,
+            progress: 0, 
+            systemError: null,
+            animationInterval: null,
+            
+            // Calibració i Robustesa
+            calibConcentration: 1.0, 
+            calibrationData: [], 
+            robustnessResults: null,
+            isRobustnessTesting: false,
+            isRobustnessModalOpen: false,
+            
+            // Resultats del Càlcul
+            chromatogramData: { peaks: [], criticalRs: { Rs: Infinity, comp1: '', comp2: '' }, tR1: 0 },
+            pressure: 0,
+            
+            // Referència per a la concentració de l'estàndard si és una injecció de calibració
+            calibConcentrationRef: 1.0, 
+            
+            // Referència per a la instància de Chart.js
+            calibrationChartInstance: null,
+        };
+
+        // --- LÒGICA DE NEGOCI I CÀLCULS (MOTOR DEL SIMULADOR) ---
+
+        /**
+         * Calcula el factor de capacitat (k') per a un compost sota condicions específiques.
+         * @param {object} comp - L'objecte del compost.
+         * @param {number} phi - La fracció de dissolvent orgànic (0-1).
+         * @param {number} tempEffect - El factor de correcció de la temperatura.
+         * @param {number} pH - El pH de la fase mòbil.
+         * @param {object} selectedColumn - L'objecte de la columna seleccionada.
+         * @returns {number} El valor de k' calculat.
+         */
+        function calculateKPrime(comp, phi, tempEffect, pH, selectedColumn) {
+            let k = comp.k_ref * Math.pow(10, -comp.S * phi);
+
+            // Efecte del pH per a compostos ionitzables
+            if (comp.pKa > 0) {
+                const fractionNeutral = 1 / (1 + Math.pow(10, pH - comp.pKa));
+                k = k * fractionNeutral; 
+            }
+
+            // Efecte de la selectivitat de la columna
+            k = k * selectedColumn.selectivityFactor;
+            return Math.max(0, k * tempEffect);
+        }
+        
+        /**
+         * Calcula les dades completes d'un cromatograma (pics, resolució) per a un conjunt de paràmetres.
+         * @param {object} params - Objecte amb tots els paràmetres del mètode.
+         * @param {Array<object>} currentCompounds - Array dels compostos a analitzar.
+         * @param {object} selectedColumn - L'objecte de la columna seleccionada.
+         * @returns {object} Un objecte amb `peaks`, `criticalRs` i `tR1`.
+         */
+        function calculateChromatogram(params, currentCompounds, selectedColumn) {
+            const { flowRate, isocraticSolventB, columnLength, temperature, pH, useGradient, endSolventB, gradientTime } = params;
+
+            if (!currentCompounds || currentCompounds.length === 0 || !selectedColumn) {
+                return { peaks: [], criticalRs: { Rs: Infinity, comp1: '', comp2: '' }, tR1: 0 };
+            }
+
+            // Càlculs bàsics
+            const deadVolumeFactor = 0.015; 
+            const deadTime = (columnLength * deadVolumeFactor) / flowRate; 
+            const maxTime = useGradient ? gradientTime * 2 : 30; 
+            const tempEffect = 1 - (temperature - 25) * 0.015;
+            const N_base = selectedColumn.baseEfficiency;
+
+            // Càlcul de cada pic
+            const calculatedPeaks = currentCompounds.map(comp => {
+                let tr;
+                const N = columnLength * N_base; 
+                
+                if (comp.k_ref === 0) {
+                    // Temps mort
+                    tr = deadTime;
+                } else if (useGradient) {
+                    // Càlcul de retenció en gradient (aproximació numèrica)
+                    let sumKInverse = 0;
+                    const dt = 0.05; 
+                    const phiInitial = isocraticSolventB / 100;
+                    const phiFinal = endSolventB / 100;
+                    const phiSlope = (phiFinal - phiInitial) / gradientTime;
+
+                    // Integració numèrica per trobar el temps de retenció
+                    for (let t = deadTime; t < maxTime; t += dt) {
+                        let currentPhi = phiInitial + phiSlope * (t - deadTime);
+                        currentPhi = Math.min(Math.max(phiInitial, currentPhi), phiFinal); 
+
+                        const kPrime_t = calculateKPrime(comp, currentPhi, tempEffect, pH, selectedColumn);
+                        
+                        sumKInverse += dt / kPrime_t;
+
+                        if (sumKInverse >= 1) {
+                            tr = t;
+                            break;
+                        }
+                    }
+                    tr = tr < maxTime ? tr : maxTime; 
+
+                } else {
+                    // Càlcul isocràtic
+                    const phi = isocraticSolventB / 100;
+                    const finalK = calculateKPrime(comp, phi, tempEffect, pH, selectedColumn);
+                    tr = deadTime * (1 + finalK); 
+                }
+                
+                // Càlcul de l'amplada i alçada del pic
+                const sigma = tr / Math.sqrt(N);
+                const width = 4 * sigma; 
+                
+                const height = (1 / (sigma * Math.sqrt(2 * Math.PI))) * 10 * comp.concentration; 
+
+                return { ...comp, tr, width, height, sigma };
+            });
+
+            // Càlcul de la Resolució Crítica (Rs)
+            const resolvablePeaks = calculatedPeaks.filter(p => p.tr > 0);
+            let criticalRs = { Rs: Infinity, comp1: '', comp2: '' };
+            
+            for (let i = 1; i < resolvablePeaks.length; i++) {
+                const peak1 = resolvablePeaks[i - 1];
+                const peak2 = resolvablePeaks[i];
+
+                if (peak1.name.includes('Temps Mort')) continue;
+                
+                // Fórmula de la resolució
+                const Rs = (2 * (peak2.tr - peak1.tr)) / (peak2.width + peak1.width);
+                
+                if (Rs > 0 && Rs < criticalRs.Rs) {
+                    criticalRs = {
+                        Rs: Rs,
+                        comp1: peak1.name,
+                        comp2: peak2.name,
+                    };
+                }
+            }
+            
+            // Temps de retenció del primer pic real (per a l'anàlisi de robustesa)
+            const tR1 = calculatedPeaks.length > 1 ? calculatedPeaks[1].tr : 0;
+
+            return { peaks: calculatedPeaks, criticalRs, tR1 };
+        }
+
+        // --- FUNCIONS D'UTILITAT ---
+
+        /**
+         * Calcula la contrapressió del sistema.
+         * @param {number} flowRate - Flux (mL/min).
+         * @param {number} columnLength - Longitud de la columna (mm).
+         * @param {number} isocraticSolventB - Percentatge de solvent B.
+         * @param {number} temperature - Temperatura (°C).
+         * @returns {number} La pressió calculada en bar.
+         */
+        function calculatePressure(flowRate, columnLength, isocraticSolventB, temperature) {
+            const viscosityFactor = 1 + 0.5 * Math.sin((isocraticSolventB / 100) * Math.PI); 
+            const tempFactor = 1 - (temperature - 25) * 0.01; 
+            let p = (flowRate * columnLength * viscosityFactor * tempFactor * 1.5); 
+            return Math.max(0, Math.round(p));
+        }
+
+        /**
+         * Obté l'objecte de la mostra actual a partir del seu ID.
+         * @param {string} id - L'ID de la mostra.
+         * @returns {object|undefined} L'objecte de la mostra.
+         */
+        function getCurrentSample(id) {
+            return SAMPLE_MIXTURES.find(s => s.id === id);
+        }
+
+        /**
+         * Obté l'objecte de la columna actual a partir del seu ID.
+         * @param {string} id - L'ID de la columna.
+         * @returns {object|undefined} L'objecte de la columna.
+         */
+        function getCurrentColumn(id) {
+            return COLUMN_TYPES.find(c => c.id === id);
+        }
+        /** @returns {object} Un objecte amb els paràmetres nominals actuals del mètode. */
+        function getNominalParams() {
+            return {
+                flowRate: appState.flowRate,
+                isocraticSolventB: appState.isocraticSolventB,
+                columnLength: appState.columnLength,
+                temperature: appState.temperature,
+                pH: appState.pH,
+                useGradient: appState.useGradient,
+                endSolventB: appState.endSolventB,
+                gradientTime: appState.gradientTime
+            };
+        }
+
+        // --- CONTROLADORS DE L'APLICACIÓ ---
+
+        /**
+         * Actualitza totes les dades calculades (cromatograma, pressió) basant-se en l'estat actual.
+         * Aquesta funció és el cor del simulador, recalculant resultats quan canvien els paràmetres.
+         */
+        function updateChromatogramData() {
+            const nominalParams = getNominalParams();
+            const selectedSample = getCurrentSample(appState.selectedSampleId);
+            const selectedColumn = getCurrentColumn(appState.selectedColumnId);
+            
+            // Clona els compostos per a un càlcul net, assegurant concentració 1.0 per a Rs/tr.
+            const currentCompounds = selectedSample ? JSON.parse(JSON.stringify(selectedSample.compounds)) : [];
+
+            appState.chromatogramData = calculateChromatogram(nominalParams, currentCompounds, selectedColumn);
+            
+            appState.pressure = calculatePressure(appState.flowRate, appState.columnLength, appState.isocraticSolventB, appState.temperature);
+
+            // Comprova si hi ha error de sobrepressió
+            if (appState.pressure > MAX_PRESSURE) {
+                appState.systemError = `SOBREPRESSIÓ! (${appState.pressure} bar). Redueixi el flux, la longitud o la temperatura.`;
+                stopAnalysis();
+            } else {
+                appState.systemError = null;
+            }
+
+            renderUI();
+        }
+        /**
+         * Inicia l'animació de l'anàlisi cromatogràfica.
+         * @param {boolean} [isStandardInjection=false] - Indica si la injecció és d'un estàndard de calibració.
+         */
+        function startAnalysis(isStandardInjection = false) {
+            if (appState.systemError || appState.isRunning || appState.isRobustnessTesting) return;
+
+            // Neteja qualsevol interval anterior per evitar múltiples bucles
+            if (appState.animationInterval) clearInterval(appState.animationInterval);
+
+            // Si és una injecció estàndard, guarda la concentració per al càlcul posterior.
+            if (isStandardInjection) {
+                appState.calibConcentrationRef = appState.calibConcentration;
+            } else {
+                appState.calibConcentrationRef = 1.0; // Inyección de muestra normal
+            }
+
+            appState.progress = 0;
+            appState.isRunning = true;
+            renderUI();
+
+            const maxTr = appState.chromatogramData.peaks.length > 0 
+                ? appState.chromatogramData.peaks.reduce((max, p) => Math.max(max, p.tr), 0) 
+                : 15;
+            const maxTime = Math.max(maxTr * 1.2, 15);
+            const animationDurationMs = 15000; // 15 segons d'animació total
+            const updateRate = 50; // ms
+
+            appState.animationInterval = setInterval(() => {
+                const currentTime = appState.progress + (updateRate / animationDurationMs) * maxTime;
+
+                if (currentTime >= maxTime) {
+                    stopAnalysis(true);
+                    return;
+                }
+                appState.progress = currentTime;
+                updateChromatogramAnimation(); 
+            }, updateRate);
+        }
+
+        /**
+         * Actualitza només l'animació del cromatograma sense renderitzar tota la UI.
+         * Això millora el rendiment i evita problemes en canviar altres estats (com el tema).
+         */
+        function updateChromatogramAnimation() {
+            // Actualitza només el botó d'estat i el gràfic
+            const statusSpan = document.querySelector('.flex.items-center.gap-4 .font-mono span');
+            if (statusSpan) {
+                statusSpan.innerHTML = `${t('statusLabel')}: ${t('statusAnalyzing')}`;
+            }
+            renderChromatogramSVG();
+        }
+
+        /**
+         * Atura l'anàlisi en curs i reseteja l'estat de l'animació.
+         * @param {boolean} [completed=false] - Indica si l'anàlisi ha finalitzat amb èxit.
+         */
+        function stopAnalysis(completed = false) {
+            if (appState.animationInterval) {
+                clearInterval(appState.animationInterval);
+                appState.animationInterval = null;
+            }
+            appState.isRunning = false;
+            appState.progress = 0; // Reseteja el progrés
+            
+            // Si l'anàlisi ha completat i era una injecció de calibració, afegeix el punt a la corba.
+            if (completed && appState.calibConcentrationRef !== 1.0) {
+                const nominalParams = getNominalParams();
+                const selectedColumn = getCurrentColumn(appState.selectedColumnId);
+                const selectedSample = getCurrentSample(appState.selectedSampleId);
+                
+                // Recalcula el cromatograma només amb el compost d'interès a la concentració injectada.
+                const injectedCompounds = selectedSample.compounds.map((comp, idx) => ({ 
+                    ...comp, 
+                    // El segon compost (índex 1) és el que calibrem
+                    concentration: (idx === 1) ? appState.calibConcentrationRef : 0.0 
+                }));
+
+                const injectedPeaks = calculateChromatogram(nominalParams, injectedCompounds, selectedColumn).peaks;
+                const peakToCalibrate = injectedPeaks.find((p, idx) => idx === 1); 
+                
+                // Afegeix el nou punt de calibració si no existeix
+                if(peakToCalibrate && peakToCalibrate.tr > 0) {
+                    const newPoint = { 
+                        concentration: appState.calibConcentrationRef, 
+                        peakHeight: peakToCalibrate.height 
+                    };
+                    
+                    // Evita duplicats
+                    const exists = appState.calibrationData.some(p => p.concentration === newPoint.concentration);
+                    if (!exists) {
+                        appState.calibrationData.push(newPoint);
+                        // Força el redibuix de la corba
+                        drawCalibrationChart(appState.calibrationData, getCurrentSample(appState.selectedSampleId).compounds[1]?.name);
+                    }
+                }
+                appState.calibConcentrationRef = 1.0; 
+            }
+            
+            updateChromatogramData(); // Recalcula i actualitza la UI
+        }
+
+        /**
+         * Executa el test de robustesa, simulant petites variacions en els paràmetres clau.
+         */
+        async function runRobustnessTest() {
+            if (appState.isRunning || appState.systemError || appState.isRobustnessTesting) return;
+
+            appState.isRobustnessTesting = true;
+            appState.robustnessResults = null; 
+            renderUI();
+
+            const nominalParams = getNominalParams();
+            const selectedSample = getCurrentSample(appState.selectedSampleId);
+            const selectedColumn = getCurrentColumn(appState.selectedColumnId);
+            const currentCompounds = selectedSample ? JSON.parse(JSON.stringify(selectedSample.compounds)) : [];
+
+            // Defineix les variacions dels paràmetres a testejar
+            const variations = [
+                { param: 'flowRate', delta: 0.05, unit: 'mL/min', name: 'Flujo', nominal: nominalParams.flowRate }, 
+                { param: 'pH', delta: 0.1, unit: 'pH', name: 'pH', nominal: nominalParams.pH }, 
+                { param: 'isocraticSolventB', delta: 2, unit: '%', name: '% B Inicial', nominal: nominalParams.isocraticSolventB },
+                { param: 'temperature', delta: 5, unit: '°C', name: 'Temperatura', nominal: nominalParams.temperature },
+            ];
+
+            const { tR1: nominal_tR1, criticalRs: nominal_Rs } = appState.chromatogramData;
+            
+            // Comprova que les condicions nominals són adequades per al test
+            if(nominal_Rs.Rs === Infinity || nominal_tR1 === 0 || nominal_Rs.Rs < 1.5) {
+                appState.systemError = 'Error de Robustesa: La separació nominal ha de ser adequada (Rs > 1.5).';
+                appState.isRobustnessTesting = false;
+                renderUI();
+                return;
+            }
+
+            const robustnessAnalysis = variations.map(v => {
+                // --- Nominal - Delta ---
+                const lowParams = { ...nominalParams, [v.param]: nominalParams[v.param] - v.delta };
+                const lowResults = calculateChromatogram(lowParams, currentCompounds, selectedColumn);
+                
+                // --- Nominal + Delta ---
+                const highParams = { ...nominalParams, [v.param]: nominalParams[v.param] + v.delta };
+                const highResults = calculateChromatogram(highParams, currentCompounds, selectedColumn);
+
+                // Canvi percentual en tR1
+                const tR_low_change = Math.abs((lowResults.tR1 - nominal_tR1) / nominal_tR1) * 100;
+                const tR_high_change = Math.abs((highResults.tR1 - nominal_tR1) / nominal_tR1) * 100;
+                const max_tR_change = Math.max(tR_low_change, tR_high_change);
+
+                // Canvi percentual en Rs
+                const Rs_nominal_safe = Math.max(0.01, nominal_Rs.Rs); 
+                const Rs_low_change = Math.abs((lowResults.criticalRs.Rs - nominal_Rs.Rs) / Rs_nominal_safe) * 100;
+                const Rs_high_change = Math.abs((highResults.criticalRs.Rs - nominal_Rs.Rs) / Rs_nominal_safe) * 100;
+                const max_Rs_change = Math.max(Rs_low_change, Rs_high_change);
+
+                return {
+                    ...v,
+                    variation: `${v.nominal.toFixed(2)} $\pm$ ${v.delta.toFixed(2)} ${v.unit}`,
+                    max_tR_change: max_tR_change,
+                    max_Rs_change: max_Rs_change,
+                    isRobust: max_Rs_change < 5 && max_tR_change < 2 // Criteri d'exemple: <2% tR i <5% Rs
+                };
+            });
+            
+            // Simula un temps d'anàlisi per donar feedback a l'usuari
+            await new Promise(resolve => setTimeout(resolve, 2000)); 
+
+            appState.robustnessResults = robustnessAnalysis;
+            appState.isRobustnessTesting = false;
+            appState.isRobustnessModalOpen = true;
+            renderUI();
+        }
+
+        // --- RENDERITZAT I MANIPULACIÓ DEL DOM ---
+
+        /**
+         * Dibuixa o actualitza el gràfic de la corba de calibració utilitzant Chart.js.
+         * @param {Array<object>} data - Dades per a la corba [{concentration, peakHeight}].
+         * @param {string} compoundName - Nom del compost que s'està calibrant.
+         */
+        function drawCalibrationChart(data, compoundName) {
+            const chartCanvas = document.getElementById('calibration-chart');
+            if (!chartCanvas) return;
+
+            if (appState.calibrationChartInstance) {
+                appState.calibrationChartInstance.destroy();
+            }
+
+            const sortedData = [...data].sort((a, b) => a.concentration - b.concentration);
+
+            // Càlcul de la regressió lineal
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+            const n = sortedData.length;
+
+            sortedData.forEach(point => {
+                sumX += point.concentration;
+                sumY += point.peakHeight;
+                sumXY += point.concentration * point.peakHeight;
+                sumX2 += point.concentration * point.concentration;
+            });
+
+            const denominator = n * sumX2 - sumX * sumX;
+            const m = denominator !== 0 ? (n * sumXY - sumX * sumY) / denominator : 0;
+            const b = denominator !== 0 ? (sumY * sumX2 - sumX * sumXY) / denominator : 0;
+            
+            const minC = sortedData.length > 0 ? 0 : 0;
+            const maxC = sortedData.length > 0 ? sortedData[n - 1].concentration * 1.2 : 5;
+            const regressionData = [
+                { x: minC, y: m * minC + b },
+                { x: maxC, y: m * maxC + b }
+            ];
+
+            // Càlcul de R^2 (només per a visualització)
+            let r2 = 0;
+            if (n > 1) {
+                const meanY = sumY / n;
+                let sst = 0; 
+                let sse = 0; 
+                sortedData.forEach(point => {
+                    const predictedY = m * point.concentration + b;
+                    sst += Math.pow(point.peakHeight - meanY, 2);
+                    sse += Math.pow(point.peakHeight - predictedY, 2);
+                });
+                r2 = sst !== 0 ? 1 - (sse / sst) : 0;
+            }
+
+            const ctx = chartCanvas.getContext('2d');
+            appState.calibrationChartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Dades de Calibració',
+                            data: sortedData.map(p => ({ x: p.concentration, y: p.peakHeight })),
+                            backgroundColor: '#f59e0b',
+                            borderColor: '#f59e0b',
+                            pointRadius: 5,
+                        },
+                        {
+                            label: 'Línia de Regressió',
+                            data: regressionData,
+                            type: 'line',
+                            fill: false,
+                            borderColor: '#3b82f6',
+                            tension: 0.1,
+                            pointRadius: 0,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: `Corba de Calibració: ${compoundName || 'Compost Desconegut'}`,
+                            color: appState.theme === 'dark' ? '#cbd5e1' : '#334155'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `Conc: ${context.parsed.x.toFixed(2)}, Alçada: ${context.parsed.y.toFixed(2)}`,
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Concentració (unitats)', color: '#64748b' },
+                            type: 'linear',
+                            position: 'bottom',
+                            min: 0,
+                            ticks: { color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Alçada del Pic (mAU)', color: '#64748b' },
+                            min: 0,
+                            ticks: { color: appState.theme === 'dark' ? '#94a3b8' : '#64748b' }
+                        }
+                    }
+                }
+            });
+
+            // Actualizar la ecuación de la regresión
+            const equationElement = document.getElementById('regression-equation');
+            if (equationElement) {
+                if (n > 1) {
+                    equationElement.innerHTML = `Equació Aprox: $y = ${m.toFixed(2)}x ${b >= 0 ? '+' : ''} ${b.toFixed(2)}$ ($R^2 \\approx ${r2.toFixed(3)}$)`;
+                    equationElement.classList.remove('text-slate-500', 'dark:text-slate-400');
+                } else {
+                    equationElement.textContent = 'Injecti almenys 2 estàndards per traçar la corba.';
+                    equationElement.classList.add('text-slate-500', 'dark:text-slate-400');
+                }
+                // Demana a MathJax que torni a renderitzar les fórmules
+                if (window.MathJax) {
+                    MathJax.Hub.Queue(["Typeset", MathJax.Hub, equationElement]);
+                }
+            }
+        }
+
+        /** Dibuixa el cromatograma en format SVG. */
+        function renderChromatogramSVG() {
+            const svgRef = document.getElementById('chromatogram-svg');
+            if (!svgRef) return;
+            
+            const { peaks } = appState.chromatogramData;
+            const { isRunning, progress } = appState;
+
+            const maxTr = peaks.length > 0 ? peaks.reduce((max, p) => Math.max(max, p.tr), 0) : 15;
+            const maxTime = Math.max(maxTr * 1.2, 12); 
+            
+            const width = 600;
+            const height = 250;
+            const padding = 40;
+
+            let pathD = `M ${padding} ${height - padding}`;
+            
+            let maxYValue = 0;
+            const dt_plot = 0.05;
+            
+            // 1. Calcula el valor Y màxim per a l'escalat dinàmic
+            for (let timeVal = 0; timeVal <= maxTime; timeVal += dt_plot) {
+                let ySum = 0;
+                peaks.forEach(peak => {
+                    const xDiff = timeVal - peak.tr;
+                    const yVal = peak.height * Math.exp(-(xDiff * xDiff) / (2 * peak.sigma * peak.sigma));
+                    ySum += yVal;
+                });
+                if (ySum > maxYValue) {
+                    maxYValue = ySum;
+                }
+            }
+            maxYValue = Math.max(maxYValue, 0.1); 
+            const yScaleFactor = (height - 2 * padding) / (maxYValue * 1.2);
+            const xScaleFactor = (width - 2 * padding) / maxTime;
+
+            // 2. Genera el camí del cromatograma
+            let peakMarkersHTML = '';
+            for (let timeVal = 0; timeVal <= maxTime; timeVal += dt_plot) {
+                const x = timeVal * xScaleFactor;
+                
+                let ySum = 0;
+                peaks.forEach(peak => {
+                    const xDiff = timeVal - peak.tr;
+                    const yVal = peak.height * Math.exp(-(xDiff * xDiff) / (2 * peak.sigma * peak.sigma));
+                    ySum += yVal;
+                });
+
+                if (isRunning && timeVal > progress) {
+                    const currentX = (progress / maxTime) * (width - 2 * padding) + padding;
+                    pathD += ` L ${currentX} ${height - padding}`;
+                    break;
+                }
+
+                const yPixel = (height - padding) - (ySum * yScaleFactor); 
+                pathD += ` L ${x + padding} ${yPixel}`;
+            }
+            
+            if (!isRunning || progress >= maxTime) {
+                pathD += ` L ${width - padding} ${height - padding}`;
+            }
+
+            // 3. Genera els eixos i les etiquetes
+            let yAxisLabels = '';
+            const numYLabels = 4;
+            const yMaxAbsorbance = (maxYValue * 1.2).toFixed(1); 
+            for (let i = 0; i <= numYLabels; i++) {
+                const labelValue = (yMaxAbsorbance / numYLabels) * i;
+                const yPos = height - padding - (labelValue * (height - 2 * padding) / yMaxAbsorbance);
+                yAxisLabels += `
+                    <g>
+                        <text x="${padding - 5}" y="${yPos + 4}" fill="#94a3b8" text-anchor="end" font-size="10">${labelValue.toFixed(1)}</text>
+                        <line x1="${padding}" y1="${yPos}" x2="${padding + 5}" y2="${yPos}" stroke="#475569" stroke-width="1" />
+                    </g>
+                `;
+            }
+            
+            let xAxisLabels = '';
+            const numXLabels = 6;
+            for (let i = 0; i <= numXLabels; i++) {
+                const timeValue = (maxTime / numXLabels) * i;
+                const xPos = timeValue * xScaleFactor + padding;
+                xAxisLabels += `
+                    <g>
+                        <text x="${xPos}" y="${height - padding + 15}" fill="#94a3b8" text-anchor="middle" font-size="10">${timeValue.toFixed(1)}</text>
+                        <line x1="${xPos}" y1="${height - padding}" x2="${xPos}" y2="${height - padding - 5}" stroke="#475569" stroke-width="1" />
+                    </g>
+                `;
+            }
+            
+            // 4. Genera els marcadors dels pics (quan no s'està executant)
+            if (!isRunning) {
+                peaks.slice(1).forEach((peak, idx) => {
+                    peakMarkersHTML += `
+                        <g>
+                            <text 
+                                x="${(peak.tr / maxTime) * (width - 2 * padding) + padding}" 
+                                y="${height - padding + 30}" 
+                                fill="${peak.color}" 
+                                text-anchor="middle" 
+                                font-size="10"
+                            >
+                                ${idx + 2}
+                            </text>
+                            <line 
+                                x1="${(peak.tr / maxTime) * (width - 2 * padding) + padding}" 
+                                y1="${height - padding}" 
+                                x2="${(peak.tr / maxTime) * (width - 2 * padding) + padding}" 
+                                y2="${height - padding - 8}" 
+                                stroke="${peak.color}" 
+                                stroke-width="1" 
+                                stroke-dasharray="2"
+                            />
+                        </g>
+                    `;
+                });
+            }
+
+            // 5. Indicador de progrés (quan s'està executant)
+            let progressIndicatorHTML = '';
+            if (isRunning) {
+                progressIndicatorHTML = `
+                    <line 
+                        x1="${(progress / maxTime) * (width - 2 * padding) + padding}" 
+                        y1="${padding}" 
+                        x2="${(progress / maxTime) * (width - 2 * padding) + padding}" 
+                        y2="${height - padding}" 
+                        stroke="#f472b6" 
+                        stroke-dasharray="4"
+                    />
+                `;
+            }
+
+            // 6. Munta el SVG final amb tots els seus components
+            svgRef.innerHTML = `
+                <!-- Grid lines -->
+                <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="#475569" stroke-width="2" />
+                <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="#475569" stroke-width="2" />
+                
+                <!-- Etiquetas Ejes -->
+                <text x="${width/2}" y="${height-5}" fill="#94a3b8" text-anchor="middle" font-size="12">Temps (min)</text>
+                <text x="15" y="${height/2}" fill="#94a3b8" transform="rotate(-90 15 ${height/2})" text-anchor="middle" font-size="12">Absorbancia (mAU)</text>
+                ${yAxisLabels}
+                ${xAxisLabels}
+
+                <!-- El Cromatograma Principal -->
+                <path d="${pathD}" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
+                
+                ${progressIndicatorHTML}
+                ${peakMarkersHTML}
+            `;
+        }
+
+        /** Renderitza o amaga el modal amb els resultats del test de robustesa. */
+        function renderRobustnessModal() {
+            const modalContainer = document.getElementById('robustness-modal-container');
+            if (!modalContainer) return;
+            
+            if (!appState.isRobustnessModalOpen || !appState.robustnessResults) {
+                modalContainer.innerHTML = '';
+                return;
+            }
+
+            const results = appState.robustnessResults;
+            const isMethodRobust = results.every(r => r.isRobust);
+
+            let tableRowsHTML = results.map((res, index) => `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="px-4 py-2 font-medium">${res.name}</td>
+                    <td class="px-4 py-2 text-slate-500">${res.variation}</td>
+                    <td class="px-4 py-2 text-right font-mono ${res.max_tR_change > 2 ? 'text-red-600 font-bold' : 'text-emerald-600'}">
+                        ${res.max_tR_change.toFixed(2)}%
+                    </td>
+                    <td class="px-4 py-2 text-right font-mono ${res.max_Rs_change > 5 ? 'text-red-600 font-bold' : 'text-emerald-600'}">
+                        ${res.max_Rs_change.toFixed(2)}%
+                    </td>
+                    <td class="px-4 py-2 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${res.isRobust ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                            ${res.isRobust ? 'OK' : 'FALLO'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+
+            modalContainer.innerHTML = `
+                <div class="fixed inset-0 bg-slate-900/75 dark:bg-slate-900/80 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-slate-800 rounded-xl w-full max-w-3xl shadow-2xl p-6">
+                        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2 ${isMethodRobust ? 'text-emerald-700' : 'text-red-700'}">
+                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                            Resultat del Test de Robustesa
+                        </h2>
+                        <p class="text-slate-600 dark:text-slate-300 mb-6">
+                            Aquesta anàlisi mostra la sensibilitat del mètode davant petites variacions en els paràmetres clau. Un mètode és robust si $t_R$ i $R_s$ varien mínimament.
+                        </p>
+
+                        <div class="overflow-x-auto border rounded-lg">
+                            <table class="min-w-full text-sm text-left text-slate-600">
+                                <thead class="text-xs text-slate-500 uppercase bg-slate-50">
+                                    <tr>
+                                        <th class="px-4 py-2">Paràmetre Variat</th>
+                                        <th class="px-4 py-2">Variació</th>
+                                        <th class="px-4 py-2 text-right">% $\Delta$ tR Màxim</th>
+                                        <th class="px-4 py-2 text-right">% $\Delta$ Rs Crítica Màxim</th>
+                                        <th class="px-4 py-2 text-center">Robustesa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRowsHTML}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-6 p-3 rounded-lg text-center font-semibold ${isMethodRobust ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-red-50 text-red-800 dark:bg-red-900/50 dark:text-red-300'}">
+                            Veredicte del Mètode: ${isMethodRobust ? 'ROBUST! Les variacions són mínimes.' : 'POC ROBUST. Cal optimitzar els paràmetres sensibles.'}
+                        </div>
+
+                        <button
+                            onclick="closeRobustnessModal()"
+                            class="mt-4 w-full py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-500 transition-colors"
+                        >
+                            Tancar Anàlisi
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        /** Tanca el modal de robustesa. */
+        function closeRobustnessModal() {
+            appState.isRobustnessModalOpen = false;
+            renderUI();
+        }
+
+        /** Funció principal de renderitzat que actualitza tota la interfície d'usuari. */
+        function renderUI() {
+            const root = document.getElementById('content-root');
+            if (!root) return;
+            
+            // Aplica el tema fosc a l'element HTML
+            if (appState.theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+
+            const selectedSample = getCurrentSample(appState.selectedSampleId);
+            const { peaks, criticalRs } = appState.chromatogramData;
+
+            // Renderitza l'HTML principal de l'aplicació
+            root.innerHTML = `
+                <div id="robustness-modal-container"></div>
+
+                <header class="mb-6 flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div>
+                        <h1 class="text-2xl font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                            ${t('simulatorTitle')}
+                        </h1>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">${t('simulatorSubtitle')}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-sm font-mono bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-lg flex items-center gap-4 text-slate-700 dark:text-slate-200">
+                            <span class="${appState.systemError ? "text-red-600 font-bold" : "text-emerald-600"}">
+                                ${t('statusLabel')}: ${appState.systemError ? t('statusError') : appState.isRunning ? t('statusAnalyzing') : appState.isRobustnessTesting ? t('statusTesting') : t('statusReady')}
+                            </span>
+                            <span class="border-l border-slate-300 dark:border-slate-500 pl-4 flex items-center gap-2">
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H21"></path><path d="M3 6H17.74"></path><path d="M17.76 7.64L19.5 6.5"></path><path d="M3 12a2 2 0 1 0 4 0 2 2 0 1 0-4 0"></path><path d="M12 12a2 2 0 1 0 4 0 2 2 0 1 0-4 0"></path><path d="M21 12a2 2 0 1 0-4 0 2 2 0 1 0 4 0"></path></svg> P: ${appState.pressure} ${t('pressureUnit')}
+                            </span>
+                        </div>
+                        <select id="language-selector" class="bg-white dark:bg-slate-700 dark:text-white border border-slate-300 dark:border-slate-600 rounded-md text-sm p-2 focus:ring-2 focus:ring-indigo-500">
+                            <option value="ca">Català / Valencià</option>
+                            <option value="es">Español</option>
+                            <option value="en">English</option>
+                            <option value="eu">Euskara</option>
+                            <option value="gl">Galego</option>
+                        </select>
+                        <button id="theme-toggle-btn" class="p-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600">
+                            ${appState.theme === 'light' 
+                                ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>' 
+                                : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'}
+                        </button>
+                        <a href="index.html" title="Tornar a l'inici" class="p-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        </a>
+                    </div>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- PANEL DE CONTROL (IZQUIERDA) -->
+                    <div class="lg:col-span-1 space-y-6">
+                        
+                        <!-- Módulos del Instrumento -->
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                            <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"></path><path d="M12 14V10"></path><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
+                                ${t('methodParameters')}
+                            </h2>
+                            
+                            <!-- Control de Flujo -->
+                            <div class="mb-4">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('pumpFlow')}</span>
+                                    <span class="text-indigo-600 dark:text-indigo-400" id="flow-rate-display">${appState.flowRate.toFixed(1)} mL/min</span>
+                                </label>
+                                <input type="range" id="flowRate" min="0.2" max="3.0" step="0.1" value="${appState.flowRate}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                />
+                            </div>
+                            
+                            <!-- Control de Temperatura -->
+                            <div class="mb-4">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('columnTemp')}</span>
+                                    <span class="text-indigo-600 flex items-center gap-1">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg> <span id="temp-display">${appState.temperature}</span> ºC
+                                    </span>
+                                </label>
+                                <input type="range" id="temperature" min="15" max="45" step="1" value="${appState.temperature}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                />
+                            </div>
+
+                            <!-- Tipo de Elución (Isocrático/Gradiente) -->
+                            <div class="mb-4 flex items-center justify-between p-2 bg-slate-100 dark:bg-slate-700/50 rounded-md">
+                                <label class="flex items-center text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer">
+                                    <input type="checkbox" id="useGradient" ${appState.useGradient ? 'checked' : ''} 
+                                        ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                        class="form-checkbox h-4 w-4 text-indigo-600 rounded mr-2"
+                                    />
+                                    ${t('useGradient')}
+                                </label>
+                                <span class="text-xs font-semibold ${appState.useGradient ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}">
+                                    ${appState.useGradient ? t('gradient') : t('isocratic')}
+                                </span>
+                            </div>
+
+                            <!-- % Fase Orgánica (B) - Inicio -->
+                            <div class="mb-4">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('organicPhaseStart')}</span>
+                                    <span class="text-indigo-600 dark:text-indigo-400" id="solvent-b-start-display">${appState.isocraticSolventB}%</span>
+                                </label>
+                                <input type="range" id="isocraticSolventB" min="10" max="90" step="5" value="${appState.isocraticSolventB}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                />
+                            </div>
+
+                            <!-- % Fase Orgánica (B) - Final (Solo si hay gradiente) -->
+                            <div id="gradient-end-container" class="${appState.useGradient ? '' : 'hidden'} mb-4">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('organicPhaseEnd')}</span>
+                                    <span class="text-indigo-600 dark:text-indigo-400" id="solvent-b-end-display">${appState.endSolventB}%</span>
+                                </label>
+                                <input type="range" id="endSolventB" min="10" max="90" step="5" value="${appState.endSolventB}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                />
+                            </div>
+
+                            <!-- Tiempo de Gradiente (Solo si hay gradiente) -->
+                            <div id="gradient-time-container" class="${appState.useGradient ? '' : 'hidden'} mb-4">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('gradientTime')}</span>
+                                    <span class="text-indigo-600 dark:text-indigo-400" id="gradient-time-display">${appState.gradientTime.toFixed(1)} min</span>
+                                </label>
+                                <input type="range" id="gradientTime" min="1.0" max="30.0" step="1.0" value="${appState.gradientTime}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                />
+                            </div>
+                            
+                            <!-- pH de la Fase Móvil -->
+                            <div class="mb-6">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('bufferPH')}</span>
+                                    <span class="text-indigo-600 dark:text-indigo-400" id="ph-display">${appState.pH.toFixed(1)}</span>
+                                </label>
+                                <input type="range" id="pH" min="2.0" max="7.0" step="0.1" value="${appState.pH}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                />
+                                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">${t('phEffectHelp')}</p>
+                            </div>
+                            
+                            <!-- Columna -->
+                            <div class="mb-4">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('columnType')}</span>
+                                </label>
+                                <select id="selectedColumnId" value="${appState.selectedColumnId}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full p-2 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    ${COLUMN_TYPES.map(col => `<option value="${col.id}" ${appState.selectedColumnId === col.id ? 'selected' : ''}>${col.name}</option>`).join('')}
+                                </select>
+                            </div>
+
+                            <!-- Longitud Columna -->
+                            <div class="mb-2">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('columnLength')}</span>
+                                    <span class="text-indigo-600 dark:text-indigo-400" id="column-length-display">${appState.columnLength} mm</span>
+                                </label>
+                                <select id="columnLength" value="${appState.columnLength}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full p-2 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value="50" ${appState.columnLength === 50 ? 'selected' : ''}>50 mm (Ràpida)</option>
+                                    <option value="100" ${appState.columnLength === 100 ? 'selected' : ''}>100 mm (Estàndard)</option>
+                                    <option value="150" ${appState.columnLength === 150 ? 'selected' : ''}>150 mm (Alta Res)</option>
+                                    <option value="250" ${appState.columnLength === 250 ? 'selected' : ''}>250 mm (Investigación)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Muestra -->
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                            <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4L7.5 4.2C7.2 4 6.8 4 6.5 4.2L2.5 6.4C2.2 6.6 2 7 2 7.5v9C2 17.5 2.2 17.8 2.5 18L6.5 20.2C6.8 20.4 7.2 20.4 7.5 20.2L16.5 15l-9-5.2z"></path></svg>
+                                ${t('sampleToAnalyze')}
+                            </h2>
+                            
+                            <!-- Selección de Muestra -->
+                            <div class="mb-6">
+                                <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                    <span>${t('selectSample')}</span>
+                                </label>
+                                <select id="selectedSampleId" value="${appState.selectedSampleId}" 
+                                    ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                    class="w-full p-2 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    ${SAMPLE_MIXTURES.map(sample => `<option value="${sample.id}" ${appState.selectedSampleId === sample.id ? 'selected' : ''}>${sample.name}</option>`).join('')}
+                                </select>
+                                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">${t('sampleContains')} ${selectedSample?.description}</p>
+                            </div>
+
+                            <!-- Botonera de Acción Principal -->
+                            <div class="flex gap-3">
+                                <button id="inject-sample-btn" 
+                                    ${appState.isRunning || appState.systemError !== null || appState.isRobustnessTesting ? 'disabled' : ''}
+                                    class="flex-1 py-3 px-4 rounded-xl font-bold text-white shadow-md transition-all flex items-center justify-center gap-2
+                                        ${appState.isRunning || appState.systemError || appState.isRobustnessTesting ? 'bg-slate-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 dark:hover:bg-indigo-500 hover:shadow-lg active:scale-95'}
+                                    "
+                                >
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    ${t('injectSample')}
+                                </button>
+                                
+                                <button id="stop-btn"
+                                    ${appState.isRobustnessTesting ? 'disabled' : ''}
+                                    class="py-3 px-4 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-600 shadow-sm"
+                                >
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9c-.5 0-1 .5-1 1s.5 1 1 1a7 7 0 1 1-7 7"></path><polyline points="8 14 3 9 8 4"></polyline></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Alerta de Sistema -->
+                        <div id="system-error-alert" class="${appState.systemError ? '' : 'hidden'} bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-500/30 p-4 rounded-xl flex items-start gap-3 text-red-700 dark:text-red-400 animate-pulse">
+                            <svg class="w-6 h-6 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            <div class="text-sm">
+                                <p class="font-bold">${t('criticalError')}</p>
+                                <p>${appState.systemError || ''}</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- VISUALIZACIÓN (DERECHA) -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <!-- Gráfico Cromatograma -->
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-bold text-slate-700 dark:text-slate-200">${t('chromatogramTitle')}</h3>
+                                <button id="export-svg-btn"
+                                    ${appState.isRunning || appState.isRobustnessTesting ? 'disabled' : ''}
+                                    class="px-3 py-1 bg-indigo-500 text-white text-xs rounded-md hover:bg-indigo-600 dark:hover:bg-indigo-400 flex items-center gap-1"
+                                >
+                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> ${t('exportSVG')}
+                                </button>
+                            </div>
+                            <div class="h-64">
+                                <svg id="chromatogram-svg" viewBox="0 0 600 250" class="w-full h-full bg-slate-900 rounded-lg shadow-inner border border-slate-700"></svg>
+                            </div>
+                        </div>
+
+                        <!-- Corba de Calibració / Robustesa -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <!-- Corba de Calibració -->
+                            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                <div class="bg-yellow-50 dark:bg-yellow-900/30 px-6 py-3 border-b border-yellow-200 dark:border-yellow-500/30 flex justify-between items-center">
+                                    <h3 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        Corba de Calibració (${selectedSample?.compounds[1]?.name || 'Carregant...'})
+                                    </h3>
+                                </div>
+                                
+                                <div class="p-4">
+                                    <label class="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300">
+                                        <span>${t('standardConcentration')}</span>
+                                        <span class="text-red-600" id="calib-concentration-display">${appState.calibConcentration.toFixed(1)} u.</span>
+                                    </label>
+                                    <input type="range" id="calibConcentration" min="0.5" max="5.0" step="0.5" value="${appState.calibConcentration}" 
+                                        ${appState.isRunning || appState.isRobustnessTesting || appState.systemError ? 'disabled' : ''}
+                                        class="w-full h-2 bg-red-200 dark:bg-red-900/50 rounded-lg appearance-none cursor-pointer accent-red-600 mt-2"
+                                    />
+                                    <button id="inject-standard-btn"
+                                        ${appState.isRunning || appState.systemError !== null || appState.isRobustnessTesting || peaks.length < 2 ? 'disabled' : ''}
+                                        class="w-full py-2 px-4 rounded-lg font-bold text-white transition-all text-sm mt-3
+                                            ${appState.isRunning || appState.systemError || appState.isRobustnessTesting || peaks.length < 2 ? 'bg-slate-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 dark:hover:bg-red-500 active:scale-95'}
+                                        "
+                                    >
+                                        ${t('injectStandard')}
+                                    </button>
+                                    <button id="clear-calib-btn"
+                                        class="w-full py-1 px-4 text-xs text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 mt-2"
+                                    >
+                                        ${t('clearCurve')}
+                                    </button>
+                                    <div class="h-48 mt-3">
+                                        <canvas id="calibration-chart"></canvas>
+                                        <div id="regression-equation" class="text-center mt-3 text-sm font-mono bg-slate-100 dark:bg-slate-700 dark:text-slate-300 p-2 rounded-lg border border-slate-200 dark:border-slate-600">
+                                            <!-- S'omple amb JS -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Anàlisi de Robustesa -->
+                            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                <div class="bg-blue-50 dark:bg-blue-900/30 px-6 py-3 border-b border-blue-200 dark:border-blue-500/30 flex justify-between items-center">
+                                    <h3 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                                        ${t('robustnessAnalysis')}
+                                    </h3>
+                                </div>
+                                <div class="p-4 h-full flex flex-col justify-between">
+                                    <p class="text-sm text-slate-600 dark:text-slate-300">
+                                        ${t('robustnessDescription')}
+                                    </p>
+                                    <div class="flex-grow flex items-center justify-center py-4 text-center">
+                                        ${appState.isRobustnessTesting ? `
+                                            <div class="text-center">
+                                                <svg class="animate-spin h-6 w-6 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                <p class="mt-2 text-sm text-blue-600">${t('calculating')}</p>
+                                            </div>
+                                        ` : appState.robustnessResults ? `
+                                            <div class="text-center">
+                                                <p class="text-4xl font-extrabold text-slate-700 mb-2">✅</p>
+                                                <p class="text-sm text-slate-500 dark:text-slate-400">${t('resultsReady')}</p>
+                                            </div>
+                                        ` : `
+                                            <div>
+                                                <p class="text-slate-400 dark:text-slate-500">${t('pressStartTest')}</p>
+                                                <p class="text-xs text-slate-400 dark:text-slate-500">${t('goodSeparationRequired')}</p>
+                                            </div>
+                                        `}
+                                    </div>
+                                    <button id="run-robustness-btn"
+                                        ${appState.isRunning || appState.isRobustnessTesting || appState.systemError !== null || criticalRs.Rs < 1.5 ? 'disabled' : ''}
+                                        class="w-full py-2 px-4 rounded-lg font-bold text-white transition-all text-sm
+                                            ${appState.isRunning || appState.systemError || appState.isRobustnessTesting || criticalRs.Rs < 1.5 ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 active:scale-95'}
+                                        "
+                                        onclick="if(appState.robustnessResults) { appState.isRobustnessModalOpen = true; renderUI(); } else { runRobustnessTest(); }"
+                                    >
+                                        ${appState.robustnessResults ? t('viewResults') : t('startRobustnessTest')}
+                                    </button>
+                                    ${criticalRs.Rs < 1.5 ? `<p class="text-xs text-red-500 mt-2">${t('lowCriticalResolution')}</p>` : ''}
+                                </div>
+                            </div>
+
+                        </div>
+                        
+                        <!-- Taula de Resultats (Integrador) -->
+                        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <div class="bg-slate-100 dark:bg-slate-900/50 px-6 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                                <h3 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a2 2 0 0 0-2 2v7.5l-3 4.5h10l-3-4.5V4a2 2 0 0 0-2-2z"></path><path d="M10 2v2"></path><path d="M14 2v2"></path></svg>
+                                    ${t('integrationResults')}
+                                </h3>
+                                <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-400">${selectedSample?.name}</span>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left text-slate-600 dark:text-slate-300">
+                                    <thead class="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-700/50">
+                                        <tr>
+                                            <th class="px-6 py-3">${t('peak')} #</th>
+                                            <th class="px-6 py-3">${t('compound')}</th>
+                                            <th class="px-6 py-3 text-right">tR (min)</th>
+                                            <th class="px-6 py-3 text-right">${t('width')} (min)</th>
+                                            <th class="px-6 py-3 text-right">${t('kFactor')}</th>
+                                            <th class="px-6 py-3 text-right">${t('resolution')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${peaks.map((peak, idx) => {
+                                            const Rs = (idx > 0 && peaks[idx-1].tr > 0 && peak.tr > 0) ? (2 * (peak.tr - peaks[idx-1].tr)) / (peak.width + peaks[idx-1].width) : 0;
+                                            const isCritical = criticalRs.comp1 === peaks[idx-1]?.name && criticalRs.comp2 === peak.name;
+
+                                            return `
+                                                <tr class="border-b border-slate-100 dark:border-slate-700 transition-colors ${isCritical ? 'bg-red-100/50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50' : 'hover:bg-indigo-50 dark:hover:bg-slate-700/50'}">
+                                                    <td class="px-6 py-3 font-medium">${idx + 1}</td>
+                                                    <td class="px-6 py-3 flex items-center gap-2">
+                                                        <span class="w-3 h-3 rounded-full" style="background-color: ${peak.color};"></span>
+                                                        ${peak.name}
+                                                    </td>
+                                                    <td class="px-6 py-3 text-right font-mono text-indigo-600 dark:text-indigo-400 font-bold">
+                                                        ${peak.tr.toFixed(2)}
+                                                    </td>
+                                                    <td class="px-6 py-3 text-right font-mono">
+                                                        ${peak.width.toFixed(2)}
+                                                    </td>
+                                                    <td class="px-6 py-3 text-right font-mono text-slate-400 dark:text-slate-500">
+                                                        ${idx === 0 ? '-' : ((peak.tr - peaks[0].tr)/peaks[0].tr).toFixed(2)}
+                                                    </td>
+                                                    <td class="px-6 py-3 text-right font-mono">
+                                                        ${idx > 0 && peaks[idx-1].tr > 0 ? `
+                                                            <span class="${isCritical ? 'font-bold text-red-600' : (Rs >= 1.5 ? 'text-emerald-600' : 'text-orange-500')}">
+                                                                ${Rs.toFixed(2)}
+                                                                ${isCritical ? ` ${t('critical')}` : ''}
+                                                            </span>
+                                                        ` : '-'}
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                                ${criticalRs.Rs !== Infinity && criticalRs.Rs > 0 ? `
+                                    <div class="bg-slate-50 dark:bg-slate-700/50 p-3 text-center text-sm text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700">
+                                        ${t('minResolution')} <span class="font-bold ${criticalRs.Rs >= 1.5 ? 'text-emerald-600' : 'text-red-600'}">${criticalRs.Rs.toFixed(2)}</span> ${t('between')} <strong>${criticalRs.comp1}</strong> ${t('and')} <strong>${criticalRs.comp2}</strong>.
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="text-center text-xs text-slate-400 dark:text-slate-500 mt-8">
+                    Simulador Educatiu v4.0 - Laboratori Virtual HPLC (Vanilla JS Refactoritzat)
+                </footer>
+            `;
+            
+            // Adjunta els 'event listeners' als elements del DOM
+            attachEventListeners();
+            
+            // Renderitza els gràfics (SVG i Chart.js) després que el DOM estigui actualitzat
+            renderChromatogramSVG();
+            drawCalibrationChart(appState.calibrationData, selectedSample?.compounds[1]?.name);
+            renderRobustnessModal();
+        }
+
+        /** Adjunta tots els 'event listeners' als controls de la interfície. */
+        function attachEventListeners() {
+            // Manejador genérico para inputs de tipo range y select
+            const updateStateAndRender = (id, type) => {
+                const element = document.getElementById(id);
+                if (!element) return;
+                element.oninput = (e) => {
+                    let value = e.target.value;
+                    if (type === 'float') value = parseFloat(value);
+                    if (type === 'int') value = parseInt(value);
+                    
+                    appState[id] = value;
+                    updateChromatogramData(); // Recalcula les dades, que crida a renderUI()
+                };
+            };
+            
+            // Botons d'acció principals
+            document.getElementById('inject-sample-btn').onclick = () => startAnalysis(false);
+            document.getElementById('stop-btn').onclick = stopAnalysis;
+            
+            const injectStandardBtn = document.getElementById('inject-standard-btn');
+            if (injectStandardBtn) injectStandardBtn.onclick = () => startAnalysis(true);
+            
+            const clearCalibBtn = document.getElementById('clear-calib-btn');
+            if (clearCalibBtn) clearCalibBtn.onclick = () => { appState.calibrationData = []; updateChromatogramData(); };
+
+            const exportSvgBtn = document.getElementById('export-svg-btn');
+            if (exportSvgBtn) exportSvgBtn.onclick = exportChromatogram;
+
+            // Manejadores de Sliders y Selects
+            updateStateAndRender('flowRate', 'float');
+            updateStateAndRender('temperature', 'int');
+            updateStateAndRender('isocraticSolventB', 'int');
+            updateStateAndRender('endSolventB', 'int');
+            updateStateAndRender('gradientTime', 'float');
+            updateStateAndRender('pH', 'float');
+            updateStateAndRender('columnLength', 'int');
+            updateStateAndRender('selectedColumnId', 'string');
+            
+            // Slider de calibració
+            const calibConcentrationInput = document.getElementById('calibConcentration');
+            if (calibConcentrationInput) {
+                calibConcentrationInput.oninput = (e) => {
+                    appState.calibConcentration = parseFloat(e.target.value);
+                    document.getElementById('calib-concentration-display').textContent = appState.calibConcentration.toFixed(1) + ' u.';
+                };
+            }
+            
+            // Selector de mostra (requereix netejar les dades de calibració)
+            const selectedSampleIdInput = document.getElementById('selectedSampleId');
+            if (selectedSampleIdInput) {
+                selectedSampleIdInput.onchange = (e) => {
+                    appState.selectedSampleId = e.target.value;
+                    appState.calibrationData = []; // Reseteja la calibració
+                    updateChromatogramData();
+                };
+            }
+
+            // Selector d'idioma
+            const langSelector = document.getElementById('language-selector');
+            if (langSelector) {
+                langSelector.value = appState.currentLanguage;
+                langSelector.onchange = (e) => {
+                    appState.currentLanguage = e.target.value;
+                    updateChromatogramData();
+                };
+            }
+
+            // Botó de canvi de tema
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (themeBtn) {
+                themeBtn.onclick = () => {
+                    appState.theme = appState.theme === 'light' ? 'dark' : 'light';
+                    renderUI();
+                };
+            }
+
+            // Checkbox de Gradiente
+            const useGradientInput = document.getElementById('useGradient');
+            if (useGradientInput) {
+                useGradientInput.onchange = (e) => {
+                    appState.useGradient = e.target.checked;
+                    updateChromatogramData();
+                };
+            }
+        }
+        
+        /** Exporta el cromatograma actual com un fitxer SVG. */
+        function exportChromatogram() {
+            const svgRef = document.getElementById('chromatogram-svg');
+            if (!svgRef) return;
+            const svgData = new XMLSerializer().serializeToString(svgRef);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = svgUrl;
+            downloadLink.download = `cromatograma_${appState.selectedSampleId}_${appState.flowRate}ml_B${appState.isocraticSolventB}%.svg`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(svgUrl);
+        }
+
+        // --- INICIALITZACIÓ DE L'APLICACIÓ ---
+
+        /** Punt d'entrada: s'executa quan la pàgina ha carregat completament. */
+        window.onload = function() {
+            // 1. Calcula l'estat inicial (omple appState.chromatogramData)
+            updateChromatogramData(); 
+            
+            // 2. Renderitza la UI completa per primer cop
+            renderUI();
+            // Els 'event listeners' s'adjunten dins de renderUI() -> attachEventListeners()
+        };
+        
+    </script>
+</body>
+</html>
+</body>
+
+</html>

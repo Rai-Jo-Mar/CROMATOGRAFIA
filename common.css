@@ -1,0 +1,10 @@
+/* Estils base */
+body { font-family: 'Inter', sans-serif; }
+input[type="range"] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 4px; }
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+    background: #4f46e5; cursor: pointer; border-radius: 50%;
+    box-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+
+/* Es pot afegir aquí qualsevol altre estil compartit */
